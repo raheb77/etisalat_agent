@@ -2,9 +2,9 @@ import time
 
 from fastapi import APIRouter, HTTPException, Request
 
-from app.core import citations, confidence, policy, router, sanitizer
-from app.schemas.query import QueryRequest, QueryResponse
-from app.services import audit, facts, llm, retrieval
+from backend.app.core import citations, confidence, policy, router, sanitizer
+from backend.app.schemas.query import QueryRequest, QueryResponse
+from backend.app.services import audit, facts, llm, retrieval
 
 router_api = APIRouter()
 
@@ -75,6 +75,6 @@ def query(request: QueryRequest, http_request: Request) -> QueryResponse:
         handoff_payload={
             "team": decision["team"],
             "summary": f"ملخص السؤال: {masked_question}",
-            "evidence": evidence_items if evidence_items else [f\"{category}#no_evidence\"],
+            "evidence": evidence_items if evidence_items else [f"{category}#no_evidence"],
         } if decision["handoff"] else None,
     )
