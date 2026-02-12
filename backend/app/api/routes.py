@@ -2,9 +2,9 @@ import time
 
 from fastapi import APIRouter, HTTPException, Request
 
-from backend.app.core import citations, confidence, policy, router, sanitizer
-from backend.app.schemas.query import QueryRequest, QueryResponse
-from backend.app.services import audit, facts, llm, retrieval
+from app.core import citations, confidence, policy, router, sanitizer
+from app.schemas.query import QueryRequest, QueryResponse
+from app.services import audit, facts, llm, retrieval
 
 router_api = APIRouter()
 

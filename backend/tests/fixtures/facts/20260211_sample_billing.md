@@ -1,6 +1,8 @@
 ---
 fact_id: "fact_sample_billing"
-tags: ["fact", "billing"]
+title: "Billing dispute window"
+category: "billing"
+tags: ["billing", "invoice", "fact"]
 source: "docs/topics/billing-disputes.md"
 ---
 
