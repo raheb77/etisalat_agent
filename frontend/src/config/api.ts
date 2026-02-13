@@ -1,5 +1,18 @@
-export const API_BASE_DEFAULT =
-  import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+export const API_BASE =
+  import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8001";
 
-export const HEALTH_PATH = "/health";
-export const QUERY_PATH = "/query";
+export async function queryAgent(message: string, signal?: AbortSignal) {
+  const response = await fetch(`${API_BASE}/query`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `Request failed (${response.status}).`);
+  }
+
+  return response.json();
+}

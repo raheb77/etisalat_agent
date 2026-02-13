@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import { QUERY_PATH } from "../config/api";
+import { API_BASE } from "../config/api";
 import type { QueryRequest, QueryResponse } from "../types/query";
 
 export type QueryStatus = "idle" | "loading" | "success" | "error";
@@ -25,7 +25,8 @@ export function useQuery(apiBase: string) {
       setState({ status: "loading", data: null, error: null });
 
       try {
-        const response = await fetch(`${apiBase}${QUERY_PATH}`, {
+        const resolvedBase = apiBase.trim() || API_BASE;
+        const response = await fetch(`${resolvedBase}/query`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),

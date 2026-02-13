@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { API_BASE_DEFAULT, HEALTH_PATH } from "./config/api";
+import { API_BASE } from "./config/api";
 import { QueryForm, type StatusTone } from "./components/QueryForm";
 import { ResponsePanel } from "./components/ResponsePanel";
 import { useQuery } from "./hooks/useQuery";
@@ -14,13 +14,13 @@ export function App() {
   const [categoryHint, setCategoryHint] = useState("");
   const [locale, setLocale] = useState("ar-SA");
   const [apiBaseInput, setApiBaseInput] = useState(
-    () => localStorage.getItem("csr_api_base") ?? API_BASE_DEFAULT
+    () => localStorage.getItem("csr_api_base") ?? API_BASE
   );
   const [backendStatus, setBackendStatus] = useState("Checking...");
   const [formError, setFormError] = useState<string | null>(null);
 
   const resolvedApiBase = useMemo(
-    () => apiBaseInput.trim() || API_BASE_DEFAULT,
+    () => apiBaseInput.trim() || API_BASE,
     [apiBaseInput]
   );
 
@@ -35,7 +35,7 @@ export function App() {
 
     const pingBackend = async () => {
       try {
-        const response = await fetch(`${resolvedApiBase}${HEALTH_PATH}`);
+        const response = await fetch(`${resolvedApiBase}/health`);
         if (!active) return;
         setBackendStatus(response.ok ? "Online" : "Degraded");
       } catch (error) {
@@ -138,6 +138,7 @@ export function App() {
               categoryHint={categoryHint}
               locale={locale}
               apiBase={apiBaseInput}
+              apiPlaceholder={API_BASE}
               onQuestionChange={setQuestion}
               onCategoryHintChange={setCategoryHint}
               onLocaleChange={setLocale}

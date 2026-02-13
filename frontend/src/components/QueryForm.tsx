@@ -7,6 +7,7 @@ type QueryFormProps = {
   categoryHint: string;
   locale: string;
   apiBase: string;
+  apiPlaceholder: string;
   onQuestionChange: (value: string) => void;
   onCategoryHintChange: (value: string) => void;
   onLocaleChange: (value: string) => void;
@@ -30,6 +31,7 @@ export function QueryForm({
   categoryHint,
   locale,
   apiBase,
+  apiPlaceholder,
   onQuestionChange,
   onCategoryHintChange,
   onLocaleChange,
@@ -113,7 +115,7 @@ export function QueryForm({
           name="apiBase"
           type="url"
           className="w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm shadow-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-200"
-          placeholder="http://localhost:8000"
+          placeholder={apiPlaceholder}
           value={apiBase}
           onChange={(event) => onApiBaseChange(event.target.value)}
         />
