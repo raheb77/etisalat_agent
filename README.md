@@ -4,8 +4,9 @@ Minimal decision-support backend with a lightweight CSR UI for querying `/query`
 
 ## Quickstart
 1. Activate your backend virtualenv.
-2. Run `make dev`.
-3. Open `http://localhost:5173`.
+2. Install frontend deps once: `cd frontend && npm install`.
+3. Run `make dev`.
+4. Open `http://localhost:5173`.
 
 ## Demo
 1. Run `make dev`.

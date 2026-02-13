@@ -24,7 +24,11 @@ BACKEND_PID=$!
 
 (
   cd "${ROOT_DIR}/frontend"
-  python3 -m http.server "${FRONTEND_PORT}"
+  if [[ ! -d node_modules ]]; then
+    echo "frontend/node_modules missing. Run 'npm install' inside ./frontend first."
+    exit 1
+  fi
+  npm run dev -- --host 0.0.0.0 --port "${FRONTEND_PORT}"
 ) &
 FRONTEND_PID=$!
 
