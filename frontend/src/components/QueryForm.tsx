@@ -6,12 +6,9 @@ type QueryFormProps = {
   question: string;
   categoryHint: string;
   locale: string;
-  apiBase: string;
-  apiPlaceholder: string;
   onQuestionChange: (value: string) => void;
   onCategoryHintChange: (value: string) => void;
   onLocaleChange: (value: string) => void;
-  onApiBaseChange: (value: string) => void;
   onSubmit: () => void;
   onSample: () => void;
   isLoading: boolean;
@@ -30,12 +27,9 @@ export function QueryForm({
   question,
   categoryHint,
   locale,
-  apiBase,
-  apiPlaceholder,
   onQuestionChange,
   onCategoryHintChange,
   onLocaleChange,
-  onApiBaseChange,
   onSubmit,
   onSample,
   isLoading,
@@ -104,21 +98,6 @@ export function QueryForm({
             <option value="en-US">en-US</option>
           </select>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-800" htmlFor="apiBase">
-          API base URL
-        </label>
-        <input
-          id="apiBase"
-          name="apiBase"
-          type="url"
-          className="w-full rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm shadow-sm outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-200"
-          placeholder={apiPlaceholder}
-          value={apiBase}
-          onChange={(event) => onApiBaseChange(event.target.value)}
-        />
       </div>
 
       <div className="flex flex-wrap gap-3">

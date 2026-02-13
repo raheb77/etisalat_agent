@@ -61,7 +61,11 @@ export function useChat(): UseChatResult {
       setIsLoading(true);
 
       try {
-        const data = (await queryAgent(trimmed)) as QueryResponse;
+        const data = (await queryAgent({
+          question: trimmed,
+          locale: "ar-SA",
+          channel: "csr_ui",
+        })) as QueryResponse;
         updateLastAssistantMessage({
           content: data.answer ?? "",
           status: "done",

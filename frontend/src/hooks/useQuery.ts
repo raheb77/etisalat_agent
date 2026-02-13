@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import { API_BASE } from "../config/api";
+import { queryAgent } from "../config/api";
 import type { QueryRequest, QueryResponse } from "../types/query";
 
 export type QueryStatus = "idle" | "loading" | "success" | "error";
@@ -17,7 +17,7 @@ const initialState: QueryState = {
   error: null,
 };
 
-export function useQuery(apiBase: string) {
+export function useQuery() {
   const [state, setState] = useState<QueryState>(initialState);
 
   const runQuery = useCallback(
@@ -25,19 +25,7 @@ export function useQuery(apiBase: string) {
       setState({ status: "loading", data: null, error: null });
 
       try {
-        const resolvedBase = apiBase.trim() || API_BASE;
-        const response = await fetch(`${resolvedBase}/query`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          const message = await response.text();
-          throw new Error(message || `Request failed (${response.status}).`);
-        }
-
-        const data = (await response.json()) as QueryResponse;
+        const data = (await queryAgent(payload)) as QueryResponse;
         setState({ status: "success", data, error: null });
         return data;
       } catch (error) {
@@ -47,7 +35,7 @@ export function useQuery(apiBase: string) {
         return null;
       }
     },
-    [apiBase]
+    []
   );
 
   const reset = useCallback(() => {

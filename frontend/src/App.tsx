@@ -13,29 +13,17 @@ export function App() {
   const [question, setQuestion] = useState("");
   const [categoryHint, setCategoryHint] = useState("");
   const [locale, setLocale] = useState("ar-SA");
-  const [apiBaseInput, setApiBaseInput] = useState(
-    () => localStorage.getItem("csr_api_base") ?? API_BASE
-  );
   const [backendStatus, setBackendStatus] = useState("Checking...");
   const [formError, setFormError] = useState<string | null>(null);
 
-  const resolvedApiBase = useMemo(
-    () => apiBaseInput.trim() || API_BASE,
-    [apiBaseInput]
-  );
-
-  const { state, runQuery } = useQuery(resolvedApiBase);
-
-  useEffect(() => {
-    localStorage.setItem("csr_api_base", resolvedApiBase);
-  }, [resolvedApiBase]);
+  const { state, runQuery } = useQuery();
 
   useEffect(() => {
     let active = true;
 
     const pingBackend = async () => {
       try {
-        const response = await fetch(`${resolvedApiBase}/health`);
+        const response = await fetch(`${API_BASE}/health`);
         if (!active) return;
         setBackendStatus(response.ok ? "Online" : "Degraded");
       } catch (error) {
@@ -50,7 +38,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [resolvedApiBase]);
+  }, []);
 
   const handleSubmit = async () => {
     if (!question.trim()) {
@@ -137,12 +125,9 @@ export function App() {
               question={question}
               categoryHint={categoryHint}
               locale={locale}
-              apiBase={apiBaseInput}
-              apiPlaceholder={API_BASE}
               onQuestionChange={setQuestion}
               onCategoryHintChange={setCategoryHint}
               onLocaleChange={setLocale}
-              onApiBaseChange={(value) => setApiBaseInput(value)}
               onSubmit={handleSubmit}
               onSample={() => {
                 setQuestion(SAMPLE_QUESTION);
