@@ -6,3 +6,14 @@ backend-test:
 
 backend-lint:
 	@echo "No lint configured"
+
+venv-check:
+	@if [ -z "$$VIRTUAL_ENV" ]; then echo "Virtualenv is not active. Please activate your venv and retry."; exit 1; fi
+
+test:
+	@cd backend && pytest -q
+
+phase2-smoke:
+	@./scripts/phase2_smoke.sh
+
+phase2-validate: venv-check test phase2-smoke

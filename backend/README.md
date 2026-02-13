@@ -14,6 +14,12 @@ pip install -e .
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+## Phase 2 smoke validation
+Run from repo root:
+```bash
+./scripts/phase2_smoke.sh
+```
+
 ## Docker run
 ```bash
 docker build -t csr-backend ./backend
