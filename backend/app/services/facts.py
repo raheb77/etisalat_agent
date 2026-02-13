@@ -131,7 +131,7 @@ def search_facts(question: str, category: str) -> List[FactHit]:
 
         tag_score = 0.0
         if category != "unknown" and category in fact.tags:
-            tag_score = 0.3
+            tag_score = 0.35
 
         fact_score = keyword_score + tag_score
 
