@@ -13,14 +13,14 @@ export function App() {
   const [question, setQuestion] = useState("");
   const [categoryHint, setCategoryHint] = useState("");
   const [locale, setLocale] = useState("ar-SA");
-  const [apiBaseInput, setApiBaseInput] = useState(() =>
-    localStorage.getItem("csr_api_base")
+  const [apiBaseInput, setApiBaseInput] = useState(
+    () => localStorage.getItem("csr_api_base") ?? API_BASE_DEFAULT
   );
   const [backendStatus, setBackendStatus] = useState("Checking...");
   const [formError, setFormError] = useState<string | null>(null);
 
   const resolvedApiBase = useMemo(
-    () => apiBaseInput?.trim() || API_BASE_DEFAULT,
+    () => apiBaseInput.trim() || API_BASE_DEFAULT,
     [apiBaseInput]
   );
 
@@ -137,7 +137,7 @@ export function App() {
               question={question}
               categoryHint={categoryHint}
               locale={locale}
-              apiBase={apiBaseInput ?? ""}
+              apiBase={apiBaseInput}
               onQuestionChange={setQuestion}
               onCategoryHintChange={setCategoryHint}
               onLocaleChange={setLocale}
