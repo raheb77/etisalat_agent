@@ -8,11 +8,23 @@ type ChatWindowProps = {
   messages: Message[];
   isLoading: boolean;
   onSend: (content: string) => void;
+  locale: "ar-SA" | "en-US";
+  onLocaleChange: (value: "ar-SA" | "en-US") => void;
+  categoryHint: string;
+  onCategoryHintChange: (value: string) => void;
 };
 
 const SCROLL_THRESHOLD = 48;
 
-export function ChatWindow({ messages, isLoading, onSend }: ChatWindowProps) {
+export function ChatWindow({
+  messages,
+  isLoading,
+  onSend,
+  locale,
+  onLocaleChange,
+  categoryHint,
+  onCategoryHintChange,
+}: ChatWindowProps) {
   const [draft, setDraft] = useState("");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const shouldAutoScrollRef = useRef(true);
@@ -176,6 +188,43 @@ export function ChatWindow({ messages, isLoading, onSend }: ChatWindowProps) {
               }
             }}
           />
+          <div className="grid gap-3 md:grid-cols-[160px_1fr]">
+            <div className="space-y-2">
+              <label
+                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                htmlFor="chatLocale"
+              >
+                Locale
+              </label>
+              <select
+                id="chatLocale"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-200"
+                value={locale}
+                onChange={(event) =>
+                  onLocaleChange(event.target.value as "ar-SA" | "en-US")
+                }
+              >
+                <option value="ar-SA">ar-SA</option>
+                <option value="en-US">en-US</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label
+                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                htmlFor="categoryHint"
+              >
+                Category hint (optional)
+              </label>
+              <input
+                id="categoryHint"
+                type="text"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-200"
+                placeholder="billing, network, plans"
+                value={categoryHint}
+                onChange={(event) => onCategoryHintChange(event.target.value)}
+              />
+            </div>
+          </div>
 
           <div className="flex items-center justify-between">
             <div className="text-xs text-slate-500">

@@ -1,22 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { API_BASE } from "./config/api";
-import { QueryForm, type StatusTone } from "./components/QueryForm";
-import { ResponsePanel } from "./components/ResponsePanel";
-import { useQuery } from "./hooks/useQuery";
-import type { QueryRequest } from "./types/query";
+import { ChatWindow } from "./components/ChatWindow";
+import { useChat } from "./hooks/useChat";
 
-const SAMPLE_QUESTION =
-  "How long does it take to port a mobile number and what is the maximum wait time?";
+const DEFAULT_LOCALE = "ar-SA";
 
 export function App() {
-  const [question, setQuestion] = useState("");
   const [categoryHint, setCategoryHint] = useState("");
-  const [locale, setLocale] = useState("ar-SA");
+  const [locale, setLocale] = useState<"ar-SA" | "en-US">(DEFAULT_LOCALE);
   const [backendStatus, setBackendStatus] = useState("Checking...");
-  const [formError, setFormError] = useState<string | null>(null);
 
-  const { state, runQuery } = useQuery();
+  const { messages, isLoading, error, sendMessage } = useChat();
 
   useEffect(() => {
     let active = true;
@@ -40,49 +35,13 @@ export function App() {
     };
   }, []);
 
-  const handleSubmit = async () => {
-    if (!question.trim()) {
-      setFormError("Please enter a question.");
-      return;
-    }
-
-    setFormError(null);
-
-    const payload: QueryRequest = {
-      question: question.trim(),
+  const handleSend = async (content: string) => {
+    await sendMessage(content, {
       locale,
       channel: "csr_ui",
       ...(categoryHint.trim() ? { category_hint: categoryHint.trim() } : {}),
-    };
-
-    await runQuery(payload);
+    });
   };
-
-  const statusMessage = useMemo(() => {
-    if (formError) {
-      return formError;
-    }
-    if (state.status === "loading") {
-      return "Running query...";
-    }
-    if (state.status === "error") {
-      return state.error ?? "Request failed.";
-    }
-    if (state.status === "success") {
-      return "Query complete.";
-    }
-    return "";
-  }, [formError, state.error, state.status]);
-
-  const statusTone: StatusTone = formError
-    ? "error"
-    : state.status === "loading"
-    ? "loading"
-    : state.status === "error"
-    ? "error"
-    : state.status === "success"
-    ? "success"
-    : "idle";
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#ffffff_0%,_#f7f3ee_45%),radial-gradient(circle_at_30%_20%,_#f1e7da_0,_transparent_55%)]">
@@ -119,29 +78,20 @@ export function App() {
           </div>
         </header>
 
-        <main className="grid gap-6 lg:grid-cols-[minmax(0,_1fr)_minmax(0,_1.15fr)]">
+        <main className="grid gap-6">
           <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-soft">
-            <QueryForm
-              question={question}
-              categoryHint={categoryHint}
+            <ChatWindow
+              messages={messages}
+              isLoading={isLoading}
+              onSend={handleSend}
               locale={locale}
-              onQuestionChange={setQuestion}
-              onCategoryHintChange={setCategoryHint}
               onLocaleChange={setLocale}
-              onSubmit={handleSubmit}
-              onSample={() => {
-                setQuestion(SAMPLE_QUESTION);
-                setCategoryHint("number_porting");
-                setLocale("en-US");
-              }}
-              isLoading={state.status === "loading"}
-              statusMessage={statusMessage}
-              statusTone={statusTone}
+              categoryHint={categoryHint}
+              onCategoryHintChange={setCategoryHint}
             />
-          </section>
-
-          <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-soft">
-            <ResponsePanel data={state.data} />
+            {error && (
+              <div className="mt-4 text-sm text-rose-600">{error}</div>
+            )}
           </section>
         </main>
       </div>
