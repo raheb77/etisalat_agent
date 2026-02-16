@@ -4,17 +4,43 @@ import { ResponsePanel } from "./ResponsePanel";
 import type { Message } from "../types/chat";
 import type { QueryResponse } from "../types/query";
 
+export type UiLocale = "ar-SA" | "en-US";
+
 type ChatWindowProps = {
   messages: Message[];
   isLoading: boolean;
   onSend: (content: string) => void;
-  locale: "ar-SA" | "en-US";
-  onLocaleChange: (value: "ar-SA" | "en-US") => void;
+  locale: UiLocale;
+  onLocaleChange: (value: UiLocale) => void;
   categoryHint: string;
   onCategoryHintChange: (value: string) => void;
 };
 
 const SCROLL_THRESHOLD = 48;
+
+function extractTLDR(answer: string | undefined, uiLocale: UiLocale): string {
+  const isArabicUi = uiLocale === "ar-SA";
+  if (!answer || answer.trim() === "") {
+    return isArabicUi ? "لا تتوفر إجابة." : "No answer available.";
+  }
+
+  const MAX_CHARS = 140;
+  const sentenceEndPattern = isArabicUi ? /[.،؟!](\s|$)/ : /[.?!](\s|$)/;
+  const match = answer.match(sentenceEndPattern);
+
+  if (match?.index !== undefined && match.index + 1 <= MAX_CHARS) {
+    return answer.slice(0, match.index + 1).trim();
+  }
+
+  if (answer.length <= MAX_CHARS) return answer.trim();
+
+  const truncated = answer.slice(0, MAX_CHARS);
+  const lastSpace = truncated.lastIndexOf(" ");
+  if (lastSpace > Math.floor(MAX_CHARS * 0.6)) {
+    return truncated.slice(0, lastSpace).trim() + "…";
+  }
+  return truncated.trim() + "…";
+}
 
 export function ChatWindow({
   messages,
@@ -127,6 +153,9 @@ export function ChatWindow({
               : null;
             const confidence = normalizedPayload?.confidence ?? 0;
             const confidencePercent = `${Math.round(confidence * 100)}%`;
+            const assistantPreview = normalizedPayload
+              ? extractTLDR(normalizedPayload.answer, locale)
+              : null;
             return (
               <div
                 key={message.id}
@@ -141,7 +170,11 @@ export function ChatWindow({
                       : "max-w-[85%] bg-zinc-800 text-zinc-100"
                   }`}
                 >
-                  {message.content || (message.status === "pending" ? "…" : "")}
+                  {isUser
+                    ? message.content
+                    : assistantPreview ??
+                      (message.content ||
+                        (message.status === "pending" ? "…" : ""))}
                 </div>
                 {!isUser && normalizedPayload && (
                   <div className="w-full max-w-3xl space-y-3">
