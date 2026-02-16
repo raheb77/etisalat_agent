@@ -42,6 +42,37 @@ function extractTLDR(answer: string | undefined, uiLocale: UiLocale): string {
   return truncated.trim() + "…";
 }
 
+function confidenceBand(pct: number): "high" | "moderate" | "low" {
+  if (pct >= 80) return "high";
+  if (pct >= 50) return "moderate";
+  return "low";
+}
+
+function confidenceLabel(
+  band: "high" | "moderate" | "low",
+  uiLocale: UiLocale
+): string {
+  const ar = uiLocale === "ar-SA";
+  if (band === "high") return ar ? "ثقة عالية" : "High confidence";
+  if (band === "moderate") return ar ? "ثقة متوسطة" : "Moderate confidence";
+  return ar ? "ثقة منخفضة" : "Low confidence";
+}
+
+function handoffTitle(uiLocale: UiLocale): string {
+  return uiLocale === "ar-SA" ? "يتطلب تحويل للموظف" : "Handoff required";
+}
+
+function handoffSubtitle(opts: {
+  handoffReason?: string;
+  confidence?: number;
+  uiLocale: UiLocale;
+}): string {
+  const reason = opts.handoffReason?.trim();
+  if (reason) return reason;
+  const pct = Math.max(0, Math.min(100, opts.confidence ?? 0));
+  return confidenceLabel(confidenceBand(pct), opts.uiLocale);
+}
+
 export function ChatWindow({
   messages,
   isLoading,
@@ -156,6 +187,8 @@ export function ChatWindow({
             const assistantPreview = normalizedPayload
               ? extractTLDR(normalizedPayload.answer, locale)
               : null;
+            const band = confidenceBand(Math.round(confidence * 100));
+            const bandLabel = confidenceLabel(band, locale);
             return (
               <div
                 key={message.id}
@@ -186,13 +219,19 @@ export function ChatWindow({
                       >
                         {confidencePercent}
                       </span>
+                      <span className="text-xs font-semibold text-slate-500">
+                        {bandLabel}
+                      </span>
                       {normalizedPayload.handoff && (
                         <div className="w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                           <span className="font-semibold">
-                            Handoff required.
+                            {handoffTitle(locale)}.
                           </span>{" "}
-                          {normalizedPayload.handoff_reason ||
-                            "No reason provided."}
+                          {handoffSubtitle({
+                            handoffReason: normalizedPayload.handoff_reason,
+                            confidence: Math.round(confidence * 100),
+                            uiLocale: locale,
+                          })}
                         </div>
                       )}
                     </div>
