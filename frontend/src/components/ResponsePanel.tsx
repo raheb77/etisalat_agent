@@ -9,9 +9,16 @@ type ResponsePanelProps = {
 };
 
 export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
+  const resolvedLocale = uiLocale ?? "en-US";
+  const isArabicUi = resolvedLocale === "ar-SA";
+
   if (!data) {
     return (
-      <div className="text-center text-slate-500">
+      <div
+        className="text-center text-slate-500"
+        dir={isArabicUi ? "rtl" : "ltr"}
+        lang={isArabicUi ? "ar" : "en"}
+      >
         <h2 className="font-display text-2xl text-slate-700">
           Response preview
         </h2>
@@ -23,14 +30,27 @@ export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
   }
 
   const steps = data.steps ?? [];
+  const hasAnswer = Boolean(data.answer && data.answer.trim());
+  const citations = data.citations ?? [];
+  const hasCitations = citations.length > 0;
+  const fallbackAnswer = isArabicUi
+    ? "لا تتوفر معرفة كافية للإجابة."
+    : "Insufficient knowledge to answer.";
+  const noSourcesNote = isArabicUi
+    ? "لا توجد مصادر داعمة مباشرة. يُنصح بالتحقق."
+    : "No direct supporting sources. Verification recommended.";
   const confidence = Number.isFinite(data.confidence) ? data.confidence : 0;
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6"
+      dir={isArabicUi ? "rtl" : "ltr"}
+      lang={isArabicUi ? "ar" : "en"}
+    >
       <div>
         <h2 className="font-display text-2xl text-slate-800">Answer</h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-700">
-          {data.answer}
+          {hasAnswer ? data.answer : fallbackAnswer}
         </p>
       </div>
 
@@ -97,8 +117,11 @@ export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
 
       <div>
         <h2 className="font-display text-2xl text-slate-800">Citations</h2>
+        {!hasCitations && hasAnswer && (
+          <p className="mt-2 text-sm text-slate-500">{noSourcesNote}</p>
+        )}
         <div className="mt-3">
-          <CitationsList citations={data.citations ?? []} uiLocale={uiLocale} />
+          <CitationsList citations={citations} uiLocale={uiLocale} />
         </div>
       </div>
     </div>
