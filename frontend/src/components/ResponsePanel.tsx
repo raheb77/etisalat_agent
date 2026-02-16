@@ -1,5 +1,6 @@
 import type { QueryResponse } from "../types/query";
 import { CitationsList } from "./CitationsList";
+import { getCategoryAccent } from "../utils/categoryStyle";
 
 const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
@@ -40,6 +41,7 @@ export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
     ? "لا توجد مصادر داعمة مباشرة. يُنصح بالتحقق."
     : "No direct supporting sources. Verification recommended.";
   const confidence = Number.isFinite(data.confidence) ? data.confidence : 0;
+  const categoryAccent = getCategoryAccent(data.category);
 
   return (
     <div
@@ -74,7 +76,9 @@ export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
           <div className="text-xs uppercase tracking-wide text-slate-400">
             Category
           </div>
-          <div className="mt-2 inline-flex rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">
+          <div
+            className={`mt-2 inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${categoryAccent.border} ${categoryAccent.bg} ${categoryAccent.text}`}
+          >
             {data.category || "Unknown"}
           </div>
         </div>
