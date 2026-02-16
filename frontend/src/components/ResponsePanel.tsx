@@ -5,9 +5,10 @@ const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
 type ResponsePanelProps = {
   data: QueryResponse | null;
+  uiLocale?: "ar-SA" | "en-US";
 };
 
-export function ResponsePanel({ data }: ResponsePanelProps) {
+export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
   if (!data) {
     return (
       <div className="text-center text-slate-500">
@@ -97,7 +98,7 @@ export function ResponsePanel({ data }: ResponsePanelProps) {
       <div>
         <h2 className="font-display text-2xl text-slate-800">Citations</h2>
         <div className="mt-3">
-          <CitationsList citations={data.citations ?? []} />
+          <CitationsList citations={data.citations ?? []} uiLocale={uiLocale} />
         </div>
       </div>
     </div>

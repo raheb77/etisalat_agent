@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type { Citation } from "../types/query";
 
 function citationKey(c: any): string {
@@ -45,42 +47,86 @@ function dedupeCitations<T extends { score?: number }>(items: T[]): T[] {
 
 type CitationsListProps = {
   citations: Citation[];
+  uiLocale?: "ar-SA" | "en-US";
 };
 
-export function CitationsList({ citations }: CitationsListProps) {
+const PREVIEW_MAX = 150;
+const EXPANDED_MAX = 500;
+
+function truncateChunk(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  return `${text.slice(0, maxChars)}…`;
+}
+
+export function CitationsList({ citations, uiLocale = "en-US" }: CitationsListProps) {
   const citationsToRender = dedupeCitations(citations);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const toggle = (key: string) =>
+    setExpanded((state) => ({ ...state, [key]: !state[key] }));
 
   if (citationsToRender.length === 0) {
     return <p className="text-sm text-slate-500">No citations returned.</p>;
   }
 
+  const showLabel = uiLocale === "ar-SA" ? "عرض" : "Show";
+  const hideLabel = uiLocale === "ar-SA" ? "إخفاء" : "Hide";
+
   return (
     <div className="space-y-3">
-      {citationsToRender.map((citation, index) => (
-        <div
-          key={`${citation.source}-${citation.chunk_id}-${index}`}
-          className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
-        >
-          <div className="text-xs uppercase tracking-wide text-slate-400">
-            Source
+      {citationsToRender.map((citation, index) => {
+        const key = citationKey(citation);
+        const rawChunk = (citation as { chunk?: unknown }).chunk;
+        const chunkText =
+          typeof rawChunk === "string"
+            ? rawChunk.trim()
+            : typeof citation.chunk_id === "string"
+            ? citation.chunk_id.trim()
+            : "";
+        const isExpanded = expanded[key] === true;
+        const displayText = truncateChunk(
+          chunkText,
+          isExpanded ? EXPANDED_MAX : PREVIEW_MAX
+        );
+        const controlsId = `citation-chunk-${index}`;
+
+        return (
+          <div
+            key={key}
+            className="p-3 rounded-lg border transition-all duration-150 border-zinc-200/70 hover:border-blue-300 hover:bg-blue-50/40 focus-within:ring-2 focus-within:ring-blue-500"
+          >
+            <div className="text-xs uppercase tracking-wide text-slate-400">
+              Source
+            </div>
+            <div className="text-sm font-medium text-slate-700">
+              {citation.source}
+            </div>
+            <div className="mt-2 text-xs uppercase tracking-wide text-slate-400">
+              Chunk
+            </div>
+            <div
+              id={controlsId}
+              className="text-sm font-medium text-slate-700 whitespace-pre-wrap break-words"
+            >
+              {displayText}
+            </div>
+            <button
+              type="button"
+              className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700"
+              aria-expanded={isExpanded}
+              aria-controls={controlsId}
+              onClick={() => toggle(key)}
+            >
+              {isExpanded ? hideLabel : showLabel}
+            </button>
+            <div className="mt-2 text-xs uppercase tracking-wide text-slate-400">
+              Score
+            </div>
+            <div className="text-sm font-medium text-slate-700">
+              {citation.score.toFixed(3)}
+            </div>
           </div>
-          <div className="text-sm font-medium text-slate-700">
-            {citation.source}
-          </div>
-          <div className="mt-2 text-xs uppercase tracking-wide text-slate-400">
-            Chunk
-          </div>
-          <div className="text-sm font-medium text-slate-700">
-            {citation.chunk_id}
-          </div>
-          <div className="mt-2 text-xs uppercase tracking-wide text-slate-400">
-            Score
-          </div>
-          <div className="text-sm font-medium text-slate-700">
-            {citation.score.toFixed(3)}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

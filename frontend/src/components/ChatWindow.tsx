@@ -243,7 +243,7 @@ export function ChatWindow({
                       )}
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-soft">
-                      <ResponsePanel data={normalizedPayload} />
+                      <ResponsePanel data={normalizedPayload} uiLocale={locale} />
                     </div>
                   </div>
                 )}
