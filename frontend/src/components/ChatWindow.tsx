@@ -82,6 +82,9 @@ export function ChatWindow({
   categoryHint,
   onCategoryHintChange,
 }: ChatWindowProps) {
+  const bubbleWidthClass =
+    "w-full max-w-[90%] sm:max-w-[80%] lg:max-w-[70%]";
+  const isArabicUi = locale === "ar-SA";
   const [draft, setDraft] = useState("");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const shouldAutoScrollRef = useRef(true);
@@ -197,17 +200,21 @@ export function ChatWindow({
                 }`}
               >
                 <div
-                  className={`rounded-2xl px-4 py-2 text-sm shadow-soft ${
+                  className={`${bubbleWidthClass} rounded-2xl px-4 py-2 text-sm shadow-soft ${
                     isUser
-                      ? "max-w-[75%] bg-blue-600 text-white"
-                      : "max-w-[85%] bg-zinc-800 text-zinc-100"
+                      ? "bg-blue-600 text-white"
+                      : "bg-zinc-800 text-zinc-100"
                   }`}
+                  dir={isArabicUi ? "rtl" : "ltr"}
+                  lang={isArabicUi ? "ar" : "en"}
                 >
-                  {isUser
-                    ? message.content
-                    : assistantPreview ??
-                      (message.content ||
-                        (message.status === "pending" ? "…" : ""))}
+                  <span className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    {isUser
+                      ? message.content
+                      : assistantPreview ??
+                        (message.content ||
+                          (message.status === "pending" ? "…" : ""))}
+                  </span>
                 </div>
                 {!isUser && normalizedPayload && (
                   <div className="w-full max-w-3xl space-y-3">
