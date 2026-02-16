@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { Citation } from "../types/query";
+import { computeEvidenceLevel, getEvidenceLabel } from "../utils/evidence";
 
 function citationKey(c: any): string {
   const sourceRaw = c?.source ?? "unknown";
@@ -63,16 +64,21 @@ export function CitationsList({ citations, uiLocale = "en-US" }: CitationsListPr
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const toggle = (key: string) =>
     setExpanded((state) => ({ ...state, [key]: !state[key] }));
-
-  if (citationsToRender.length === 0) {
-    return <p className="text-sm text-slate-500">No citations returned.</p>;
-  }
+  const evidenceLevel = computeEvidenceLevel(citationsToRender);
+  const evidenceLabel = getEvidenceLabel(evidenceLevel, uiLocale);
 
   const showLabel = uiLocale === "ar-SA" ? "عرض" : "Show";
   const hideLabel = uiLocale === "ar-SA" ? "إخفاء" : "Hide";
+  const evidencePrefix = uiLocale === "ar-SA" ? "الأدلة:" : "Evidence:";
 
   return (
     <div className="space-y-3">
+      <div className="text-sm text-slate-500">
+        {evidencePrefix} {evidenceLabel}
+      </div>
+      {citationsToRender.length === 0 && (
+        <p className="text-sm text-slate-500">No citations returned.</p>
+      )}
       {citationsToRender.map((citation, index) => {
         const key = citationKey(citation);
         const rawChunk = (citation as { chunk?: unknown }).chunk;
