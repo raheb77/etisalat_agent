@@ -6,6 +6,7 @@ import {
   getConfidenceBand,
   getConfidenceLabel,
 } from "../utils/confidence";
+import { computeHandoffMode } from "../utils/handoff";
 import type { Message } from "../types/chat";
 import type { QueryResponse } from "../types/query";
 
@@ -182,6 +183,15 @@ export function ChatWindow({
               : null;
             const band = getConfidenceBand(confidencePercentValue);
             const bandLabel = getConfidenceLabel(band, locale);
+            const handoffMode = normalizedPayload
+              ? computeHandoffMode({
+                  handoff: normalizedPayload.handoff,
+                  category: normalizedPayload.category,
+                  confidence: confidencePercentValue,
+                  citationsCount: normalizedPayload.citations?.length,
+                  handoffReason: normalizedPayload.handoff_reason,
+                })
+              : "none";
             return (
               <div
                 key={message.id}
@@ -219,8 +229,14 @@ export function ChatWindow({
                       <span className="text-xs font-semibold text-slate-500">
                         {bandLabel}
                       </span>
-                      {normalizedPayload.handoff && (
-                        <div className="w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                      {handoffMode !== "none" && (
+                        <div
+                          className={`w-full rounded-xl border px-3 py-2 text-sm ${
+                            handoffMode === "forced"
+                              ? "border-red-300 bg-red-50 text-red-900"
+                              : "border-amber-300 bg-amber-50 text-amber-900"
+                          }`}
+                        >
                           <span className="font-semibold">
                             {handoffTitle(locale)}.
                           </span>{" "}
