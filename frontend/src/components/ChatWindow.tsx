@@ -3,10 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { ResponsePanel } from "./ResponsePanel";
 import {
   formatConfidencePct,
-  getConfidenceBand,
-  getConfidenceLabel,
 } from "../utils/confidence";
-import { computeHandoffMode } from "../utils/handoff";
+import { getHandoffUiState } from "../utils/handoffUi";
 import type { Message } from "../types/chat";
 import type { QueryResponse } from "../types/query";
 
@@ -46,21 +44,6 @@ function extractTLDR(answer: string | undefined, uiLocale: UiLocale): string {
     return truncated.slice(0, lastSpace).trim() + "…";
   }
   return truncated.trim() + "…";
-}
-
-function handoffTitle(uiLocale: UiLocale): string {
-  return uiLocale === "ar-SA" ? "يتطلب تحويل للموظف" : "Handoff required";
-}
-
-function handoffSubtitle(opts: {
-  handoffReason?: string;
-  confidence?: number;
-  uiLocale: UiLocale;
-}): string {
-  const reason = opts.handoffReason?.trim();
-  if (reason) return reason;
-  const pct = Math.max(0, Math.min(100, opts.confidence ?? 0));
-  return getConfidenceLabel(getConfidenceBand(pct), opts.uiLocale);
 }
 
 export function ChatWindow({
@@ -164,6 +147,7 @@ export function ChatWindow({
         ref={containerRef}
         onScroll={handleScroll}
         className="flex-1 space-y-3 overflow-y-auto rounded-2xl border border-slate-200 bg-white/80 p-4"
+        data-testid="message-list"
       >
         {messages.length === 0 ? (
           <div className="text-sm text-slate-500">
@@ -181,17 +165,16 @@ export function ChatWindow({
             const assistantPreview = normalizedPayload
               ? extractTLDR(normalizedPayload.answer, locale)
               : null;
-            const band = getConfidenceBand(confidencePercentValue);
-            const bandLabel = getConfidenceLabel(band, locale);
-            const handoffMode = normalizedPayload
-              ? computeHandoffMode({
-                  handoff: normalizedPayload.handoff,
-                  category: normalizedPayload.category,
+            const uiState = normalizedPayload
+              ? getHandoffUiState({
                   confidence: confidencePercentValue,
+                  backendReason: normalizedPayload.handoff_reason,
+                  category: normalizedPayload.category,
+                  locale,
+                  handoff: normalizedPayload.handoff,
                   citationsCount: normalizedPayload.citations?.length,
-                  handoffReason: normalizedPayload.handoff_reason,
                 })
-              : "none";
+              : null;
             return (
               <div
                 key={message.id}
@@ -226,25 +209,21 @@ export function ChatWindow({
                       >
                         {confidencePercent}
                       </span>
-                      <span className="text-xs font-semibold text-slate-500">
-                        {bandLabel}
-                      </span>
-                      {handoffMode !== "none" && (
+                      {uiState && (
+                        <span className="text-xs font-semibold text-slate-500">
+                          {uiState.confidenceLabel}
+                        </span>
+                      )}
+                      {uiState?.shouldHandoff && (
                         <div
+                          data-testid="handoff-banner"
                           className={`w-full rounded-xl border px-3 py-2 text-sm ${
-                            handoffMode === "forced"
+                            uiState.handoffMode === "forced"
                               ? "border-red-300 bg-red-50 text-red-900"
                               : "border-amber-300 bg-amber-50 text-amber-900"
                           }`}
                         >
-                          <span className="font-semibold">
-                            {handoffTitle(locale)}.
-                          </span>{" "}
-                          {handoffSubtitle({
-                            handoffReason: normalizedPayload.handoff_reason,
-                            confidence: confidencePercentValue,
-                            uiLocale: locale,
-                          })}
+                          <span className="font-semibold">{uiState.bannerText}</span>
                         </div>
                       )}
                     </div>
@@ -272,6 +251,7 @@ export function ChatWindow({
                 handleSend();
               }
             }}
+            data-testid="question-input"
           />
           <div className="grid gap-3 md:grid-cols-[160px_1fr]">
             <div className="space-y-2">
@@ -288,6 +268,7 @@ export function ChatWindow({
                 onChange={(event) =>
                   onLocaleChange(event.target.value as "ar-SA" | "en-US")
                 }
+                data-testid="locale-select"
               >
                 <option value="ar-SA">ar-SA</option>
                 <option value="en-US">en-US</option>
@@ -320,6 +301,7 @@ export function ChatWindow({
               className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
               onClick={handleSend}
               disabled={isLoading}
+              data-testid="send-button"
             >
               Send
             </button>

@@ -90,7 +90,9 @@ export function App() {
               onCategoryHintChange={setCategoryHint}
             />
             {error && (
-              <div className="mt-4 text-sm text-rose-600">{error}</div>
+              <div className="mt-4 text-sm text-rose-600" data-testid="error-banner">
+                {error}
+              </div>
             )}
           </section>
         </main>

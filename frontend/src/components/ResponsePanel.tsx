@@ -1,5 +1,6 @@
 import type { QueryResponse } from "../types/query";
 import { CitationsList } from "./CitationsList";
+import { getHandoffUiState } from "../utils/handoffUi";
 import { getCategoryAccent } from "../utils/categoryStyle";
 
 const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
@@ -42,12 +43,21 @@ export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
     : "No direct supporting sources. Verification recommended.";
   const confidence = Number.isFinite(data.confidence) ? data.confidence : 0;
   const categoryAccent = getCategoryAccent(data.category);
+  const uiState = getHandoffUiState({
+    confidence,
+    backendReason: data.handoff_reason,
+    category: data.category,
+    locale: resolvedLocale,
+    handoff: data.handoff,
+    citationsCount: citations.length,
+  });
 
   return (
     <div
       className="space-y-6"
       dir={isArabicUi ? "rtl" : "ltr"}
       lang={isArabicUi ? "ar" : "en"}
+      data-testid="response-panel"
     >
       <div>
         <h2 className="font-display text-2xl text-slate-800">Answer</h2>
@@ -90,7 +100,7 @@ export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
             Handoff
           </div>
           <div className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
-            {data.handoff ? "Yes" : "No"}
+            {uiState.shouldHandoff ? "Yes" : "No"}
           </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
@@ -98,7 +108,9 @@ export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
             Reason
           </div>
           <div className="mt-2 text-sm font-medium text-slate-700">
-            {data.handoff_reason || "-"}
+            {uiState.reasonVisibility === "shown"
+              ? uiState.reasonText ?? uiState.confidenceLabel
+              : ""}
           </div>
         </div>
       </div>

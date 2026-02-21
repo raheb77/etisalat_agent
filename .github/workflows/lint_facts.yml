@@ -1,0 +1,25 @@
+name: lint-facts
+
+on:
+  push:
+    paths:
+      - "knowledge/facts/**"
+      - "backend/tests/fixtures/facts/**"
+      - "scripts/lint_facts.py"
+      - ".github/workflows/lint_facts.yml"
+  pull_request:
+    paths:
+      - "knowledge/facts/**"
+      - "backend/tests/fixtures/facts/**"
+      - "scripts/lint_facts.py"
+      - ".github/workflows/lint_facts.yml"
+
+jobs:
+  lint-facts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python3 scripts/lint_facts.py

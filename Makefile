@@ -10,6 +10,9 @@ backend-test:
 backend-lint:
 	@echo "No lint configured"
 
+lint-facts:
+	@python3 scripts/lint_facts.py
+
 venv-check:
 	@if [ -z "$$VIRTUAL_ENV" ]; then echo "Virtualenv is not active. Please activate your venv and retry."; exit 1; fi
 

@@ -37,8 +37,9 @@ class QueryResponse(BaseModel):
     category: str
     risk_level: str
     handoff: bool
-    handoff_reason: str
+    handoff_reason: str = ""
     handoff_payload: Optional[HandoffPayload] = None
+    debug: Optional[dict] = None
 
     @field_validator("confidence")
     @classmethod

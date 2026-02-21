@@ -72,7 +72,7 @@ export function CitationsList({ citations, uiLocale = "en-US" }: CitationsListPr
   const evidencePrefix = uiLocale === "ar-SA" ? "الأدلة:" : "Evidence:";
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="citations-list">
       <div className="text-sm text-slate-500">
         {evidencePrefix} {evidenceLabel}
       </div>
