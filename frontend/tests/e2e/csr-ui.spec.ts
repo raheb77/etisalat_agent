@@ -126,8 +126,11 @@ test("happy path: question -> answer with citations visible", async ({ page }) =
   await page.getByTestId("question-input").fill("كم سعر باقة 55 جيجا؟");
   await page.getByTestId("send-button").click();
 
-  await expect(page.getByTestId("response-panel")).toBeVisible();
-  await expect(page.getByText("باقة 55 جيجا سعرها 120 ريال شهرياً.")).toBeVisible();
+  const responsePanel = page.getByTestId("response-panel");
+  await expect(responsePanel).toBeVisible();
+  await expect(responsePanel).toContainText(
+    "باقة 55 جيجا سعرها 120 ريال شهرياً."
+  );
   await expect(page.getByTestId("citations-list")).toContainText(
     "docs/plans/55gb.md"
   );

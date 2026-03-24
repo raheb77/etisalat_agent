@@ -19,16 +19,36 @@ KEYWORDS = {
     "network": ["شبكة", "تغطية", "إشارة", "انترنت", "إنترنت", "سرعة", "network", "coverage"],
     "plans": ["باقة", "باقات", "ترقية", "تخفيض", "plan", "upgrade", "downgrade"],
     "roaming": ["تجوال", "روامينغ", "roaming", "international"],
-    "porting": ["نقل الرقم", "تحويل الرقم", "porting", "mnp"],
+    "porting": ["نقل الرقم", "نقل رقم", "تحويل الرقم", "porting", "mnp"],
     "ownership": ["نقل ملكية", "ملكية", "ownership", "transfer ownership"],
-    "complaints": ["شكوى", "شكاوى", "اعتراض", "complaint", "dispute"],
+    "complaints": [
+        "شكوى",
+        "شكاوى",
+        "اعتراض",
+        "complaint",
+        "dispute",
+        "اشتكي",
+        "أشتكي",
+        "تصعيد",
+        "escalate",
+        "escalation",
+    ],
     "app_login": ["تسجيل الدخول", "رمز", "OTP", "mystc", "login", "password"],
 }
 
 AUTO_ESCALATE_KEYWORDS = {
-    "legal": ["قانون", "قانوني", "legal", "محامي"],
+    "legal": [
+        "استشارة قانونية",
+        "تفسير قانوني",
+        "راي قانوني",
+        "رأي قانوني",
+        "legal advice",
+        "legal interpretation",
+        "محامي",
+        "هل يحق",
+    ],
     "fraud": ["احتيال", "fraud", "سرقة"],
-    "security": ["اختراق", "أمني", "security", "breach"],
+    "security": ["اختراق", "أمني", "security", "breach", "compromise", "إجراء عاجل"],
 }
 
 
@@ -44,6 +64,8 @@ def route(question: str, category_hint: Optional[str]) -> Tuple[str, str]:
         category = None
 
     if category is None:
+        # Treat legal interpretation/advice as sensitive, but let direct factual
+        # telecom-policy lookups fall through to their factual category when possible.
         for auto_cat, keys in AUTO_ESCALATE_KEYWORDS.items():
             if _keyword_match(question, keys):
                 return auto_cat, "high"

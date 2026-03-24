@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import re
 from typing import Tuple
 
-_TASHKEEL = re.compile(r"[\u0610-\u061A\u064B-\u065F\u0670]")
-_TATWEEL = "\u0640"
+from app.rag.normalize import normalize_text
 
 _RAW_VAGUE_PHRASES = [
     "عندي مشكلة",
@@ -48,12 +46,7 @@ _RAW_DOMAIN_ANCHORS = [
 ]
 
 def normalize_arabic(text: str) -> str:
-    cleaned = text.replace(_TATWEEL, "")
-    cleaned = _TASHKEEL.sub("", cleaned)
-    cleaned = cleaned.replace("إ", "ا").replace("أ", "ا").replace("آ", "ا")
-    cleaned = cleaned.replace("ى", "ي").replace("ئ", "ي").replace("ؤ", "و")
-    cleaned = cleaned.replace("ة", "ه")
-    return cleaned.strip()
+    return normalize_text(text)
 
 
 _VAGUE_PHRASES = [normalize_arabic(p).lower() for p in _RAW_VAGUE_PHRASES]

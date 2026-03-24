@@ -1,4 +1,4 @@
-export type EvidenceLevel = "strong" | "limited" | "none";
+export type EvidenceLevel = "strong" | "moderate" | "limited" | "none";
 
 function clampScore(value: number): number {
   if (Number.isNaN(value)) return 0;
@@ -12,14 +12,17 @@ export function computeEvidenceLevel(
     return "none";
   }
 
-  const total = citations.reduce((sum, citation) => {
-    const score = citation.score ?? 0;
-    return sum + clampScore(score);
+  const topScore = citations.reduce((maxScore, citation) => {
+    const score = clampScore(citation.score ?? 0);
+    return Math.max(maxScore, score);
   }, 0);
-  const avg = total / citations.length;
 
-  if (citations.length >= 3 && avg >= 0.75) {
+  if (topScore >= 0.8) {
     return "strong";
+  }
+
+  if (topScore >= 0.5) {
+    return "moderate";
   }
 
   return "limited";
@@ -31,6 +34,7 @@ export function getEvidenceLabel(
 ): string {
   const ar = uiLocale === "ar-SA";
   if (level === "strong") return ar ? "أدلة قوية" : "Strong evidence";
+  if (level === "moderate") return ar ? "أدلة متوسطة" : "Moderate evidence";
   if (level === "limited") return ar ? "أدلة محدودة" : "Limited evidence";
   return ar ? "لا توجد أدلة داعمة" : "No supporting evidence";
 }

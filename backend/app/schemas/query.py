@@ -21,6 +21,7 @@ class Citation(BaseModel):
     source: str
     chunk_id: str
     score: float
+    snippet: Optional[str] = None
 
 
 class HandoffPayload(BaseModel):

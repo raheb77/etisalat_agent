@@ -1,9 +1,10 @@
 import logging
 import os
-import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
+
+from app.rag.normalize import normalize_text
 
 logger = logging.getLogger(__name__)
 
@@ -87,13 +88,24 @@ def _parse_fact_file(path: Path) -> FactHit | None:
     )
 
 
+def _canonicalize_token(token: str) -> str:
+    canonical = token.strip().lower()
+    if len(canonical) > 3 and canonical.startswith("لل"):
+        canonical = canonical[1:]
+    if len(canonical) > 3 and canonical.startswith("ال"):
+        canonical = canonical[2:]
+    elif len(canonical) > 3 and canonical.startswith("ل"):
+        canonical = canonical[1:]
+    return canonical
+
+
 def _tokenize(text: str) -> List[str]:
-    cleaned = re.sub(r"[^\w\s\u0600-\u06FF]+", " ", text)
-    tokens = [t.strip().lower() for t in cleaned.replace("/", " ").split()]
-    return [t for t in tokens if len(t) > 1]
+    cleaned = normalize_text(text).replace("/", " ")
+    tokens = [_canonicalize_token(token) for token in cleaned.split()]
+    return [token for token in tokens if len(token) > 1]
 
 
-AR_STOPWORDS = {"من", "في", "على", "هل", "عندي", "عن", "إلى", "الى", "مع", "ما", "متى"}
+AR_STOPWORDS = {"من", "في", "على", "هل", "عندي", "عن", "إلى", "الى", "مع", "ما", "متى", "كم"}
 EN_STOPWORDS = {"the", "is", "at", "on", "in", "and", "or", "a", "an", "of"}
 
 
@@ -119,8 +131,8 @@ def search_facts(question: str, category: str) -> List[FactHit]:
         if not fact:
             continue
 
-        haystack = f"{fact.statement} {fact.values}".lower()
-        matched = [t for t in tokens if t in haystack]
+        haystack_tokens = set(_tokenize(f"{fact.statement} {fact.values}"))
+        matched = [token for token in tokens if token in haystack_tokens]
         tag_match = category != "unknown" and category in fact.tags
 
         if not matched and not tag_match:
@@ -142,6 +154,15 @@ def search_facts(question: str, category: str) -> List[FactHit]:
         fact.score = fact_score
         hits.append(fact)
 
-    hits.sort(key=lambda h: h.score, reverse=True)
+    # Sort by score first, then by how many distinct query terms matched. This keeps
+    # direct duration facts ahead of generic same-category facts after query normalization.
+    hits.sort(
+        key=lambda hit: (
+            hit.score,
+            len(set(hit.matched_terms)),
+            hit.statement,
+        ),
+        reverse=True,
+    )
     top_k = 3
     return hits[:top_k]

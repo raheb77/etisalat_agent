@@ -10,9 +10,15 @@ from fastapi.responses import JSONResponse
 from app.core import citations, confidence as confidence_svc, policy, router, sanitizer
 from app.rag.ambiguity import detect_ambiguity
 from app.rag.intent import detect_intent
+from app.rag.normalize import normalize_query
 from app.rag.oos import is_out_of_scope
 from app.rag.overuse import apply_overuse_penalty
-from app.rag.confidence import calculate_confidence
+from app.rag.confidence import (
+    calculate_confidence,
+    calibrate_answer_confidence,
+    detect_answer_evidence_issue,
+    has_insufficiency_marker,
+)
 from app.rag.relevance import should_fallback
 from app.schemas.query import QueryRequest, QueryResponse
 from app.services import audit, facts, llm, retrieval
@@ -47,6 +53,9 @@ _CACHE_TELEMETRY_KEYS = [
     "is_oos",
     "oos_score",
     "gate_score_used",
+    "confidence_reduced_reason",
+    "contradiction_guard_triggered",
+    "contradiction_guard_reason",
 ]
 
 def _reason_code(raw_reason: str | None) -> str:
@@ -192,6 +201,9 @@ def query(request: QueryRequest, http_request: Request) -> QueryResponse:
         "neg_cache_hit": False,
         "served_from_cache": False,
         "cache_key_hash": "",
+        "confidence_reduced_reason": "",
+        "contradiction_guard_triggered": False,
+        "contradiction_guard_reason": "",
         "rate_limited": False,
         "error_stage": "",
         "error_type": "",
@@ -203,6 +215,7 @@ def query(request: QueryRequest, http_request: Request) -> QueryResponse:
     telemetry["query_preview"] = masked_question.replace("\n", " ")[:80]
     tokens_in_est = estimate_tokens(masked_question)
     telemetry["tokens_in_est"] = tokens_in_est
+    normalized_question = normalize_query(masked_question)
     cache_key = build_cache_key(masked_question, request.locale, request.channel)
     cache_key_hash = hashlib.sha1(cache_key.encode("utf-8")).hexdigest()[:10]
     telemetry["cache_key_hash"] = cache_key_hash
@@ -384,7 +397,7 @@ def query(request: QueryRequest, http_request: Request) -> QueryResponse:
             )
 
         is_ambiguous, ambiguity_score, ambiguity_reason = detect_ambiguity(
-            masked_question
+            normalized_question
         )
         telemetry["is_ambiguous"] = is_ambiguous
         telemetry["ambiguity_score"] = ambiguity_score
@@ -459,7 +472,7 @@ def query(request: QueryRequest, http_request: Request) -> QueryResponse:
             )
 
         with StageTimer() as intent_timer:
-            intent_result = detect_intent(masked_question)
+            intent_result = detect_intent(normalized_question)
         timings["intent"] = _ms_nonzero(intent_timer.duration_ms)
         observe_ms(
             "query_stage_ms",
@@ -471,15 +484,23 @@ def query(request: QueryRequest, http_request: Request) -> QueryResponse:
         telemetry["secondary_intents"] = intent_result.secondary
         telemetry["intent_score"] = intent_result.score
 
-        category, risk = router.route(masked_question, request.category_hint)
+        category, risk = router.route(normalized_question, request.category_hint)
+        if (
+            request.category_hint is None
+            and category == "unknown"
+            and intent_result.primary not in {"general", "unknown"}
+        ):
+            category = intent_result.primary
+            if category in {"fraud", "legal", "security"}:
+                risk = "high"
         if not telemetry["detected_intent"] or telemetry["detected_intent"] == "unknown":
             telemetry["detected_intent"] = category
 
         try:
             with StageTimer() as retrieve_timer:
-                fact_hits = facts.search_facts(masked_question, category)
+                fact_hits = facts.search_facts(normalized_question, category)
                 decision_path.append("retrieve")
-                ctx = retrieval.retrieve_context(masked_question, category)
+                ctx = retrieval.retrieve_context(normalized_question, category)
             timings["retrieve"] = _ms_nonzero(retrieve_timer.duration_ms)
             observe_ms(
                 "query_stage_ms",
@@ -776,6 +797,62 @@ def query(request: QueryRequest, http_request: Request) -> QueryResponse:
                 else None,
             )
         decision_path.append("answer")
+        guard_triggered, guard_reason = detect_answer_evidence_issue(
+            raw_question=masked_question,
+            normalized_question=normalized_question,
+            answer=answer,
+            fact_hits=fact_hits,
+            contexts=ctx,
+            citations=cits,
+            top_score=gate_score_used,
+        )
+        telemetry["contradiction_guard_triggered"] = guard_triggered
+        telemetry["contradiction_guard_reason"] = guard_reason
+        if guard_triggered:
+            # Deterministic guard: replace unsupported/contradictory answers with the
+            # existing insufficient-evidence template, force low confidence, and keep
+            # handoff unchanged unless policy/routing had already required it.
+            answer, steps = _relevance_fallback_payload(request.locale)
+            cits = []
+            calibrated_confidence = 20
+            telemetry["did_fallback"] = True
+            telemetry["fallback_reason"] = guard_reason
+            telemetry["fallback_reason_code"] = guard_reason
+            telemetry["confidence"] = 20
+            telemetry["citations_count"] = 0
+            telemetry["confidence_reduced_reason"] = guard_reason
+            decision_path.append(f"fallback:{guard_reason}")
+            inc_counter("query_fallback_total", {"fallback_reason_code": guard_reason})
+            timings["fallback"] = _ms_nonzero(max(timings["fallback"], 1))
+            observe_ms(
+                "query_stage_ms",
+                timings["fallback"],
+                {"channel": request.channel, "stage": "fallback"},
+            )
+        else:
+            adjusted_confidence, reduced_reason = calibrate_answer_confidence(
+                base_confidence=calibrated_confidence,
+                top_score=gate_score_used,
+                citations=cits,
+                answer=answer,
+                category=category,
+                raw_question=masked_question,
+                normalized_question=normalized_question,
+                fact_hits=fact_hits,
+                contexts=ctx,
+            )
+            if adjusted_confidence < calibrated_confidence:
+                telemetry["confidence_reduced_reason"] = reduced_reason
+                calibrated_confidence = adjusted_confidence
+                telemetry["confidence"] = calibrated_confidence
+        # Defensive final clamp: insufficiency-style answers must never surface as
+        # high confidence in the API response, even if an earlier branch missed it.
+        if has_insufficiency_marker(answer) and calibrated_confidence > 35:
+            calibrated_confidence = 35
+            telemetry["confidence"] = calibrated_confidence
+            telemetry["confidence_reduced_reason"] = (
+                telemetry["confidence_reduced_reason"] or "insufficiency_answer"
+            )
         if handoff and category in {"legal", "fraud", "security"}:
             answer = "لا يمكن معالجة هذا الطلب هنا. سيتم تحويله إلى الجهة المختصة."
             telemetry["did_fallback"] = True

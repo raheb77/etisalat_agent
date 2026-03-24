@@ -21,6 +21,11 @@ type ChatWindowProps = {
 };
 
 const SCROLL_THRESHOLD = 48;
+const EXAMPLE_QUESTIONS = [
+  "ما مدة نقل الرقم؟",
+  "كم سعر باقة 55 جيجا؟",
+  "تعرضت لاحتيال وسحب رصيد",
+] as const;
 
 function extractTLDR(answer: string | undefined, uiLocale: UiLocale): string {
   const isArabicUi = uiLocale === "ar-SA";
@@ -58,6 +63,7 @@ export function ChatWindow({
   const bubbleWidthClass =
     "w-full max-w-[90%] sm:max-w-[80%] lg:max-w-[70%]";
   const isArabicUi = locale === "ar-SA";
+  const examplesLabel = isArabicUi ? "أسئلة مقترحة:" : "Example questions:";
   const [draft, setDraft] = useState("");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const shouldAutoScrollRef = useRef(true);
@@ -151,7 +157,7 @@ export function ChatWindow({
       >
         {messages.length === 0 ? (
           <div className="text-sm text-slate-500">
-            Start the conversation by asking a question.
+            Ask a telecom CSR question to see grounded answers, confidence, and citations.
           </div>
         ) : (
           messages.map((message) => {
@@ -217,13 +223,23 @@ export function ChatWindow({
                       {uiState?.shouldHandoff && (
                         <div
                           data-testid="handoff-banner"
-                          className={`w-full rounded-xl border px-3 py-2 text-sm ${
+                          className={`w-full rounded-2xl border px-4 py-3 text-sm shadow-sm ${
                             uiState.handoffMode === "forced"
-                              ? "border-red-300 bg-red-50 text-red-900"
-                              : "border-amber-300 bg-amber-50 text-amber-900"
+                              ? "border-amber-400 bg-gradient-to-r from-amber-100 via-amber-50 to-orange-50 text-amber-950"
+                              : "border-amber-300 bg-amber-50/90 text-amber-900"
                           }`}
                         >
-                          <span className="font-semibold">{uiState.bannerText}</span>
+                          <div className="flex items-start gap-3">
+                            <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current/15 bg-white/60 text-xs font-bold">
+                              !
+                            </span>
+                            <div className="space-y-1">
+                              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+                                {locale === "ar-SA" ? "يتطلب مراجعة" : "Review required"}
+                              </div>
+                              <span className="font-semibold">{uiState.bannerText}</span>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -253,6 +269,21 @@ export function ChatWindow({
             }}
             data-testid="question-input"
           />
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-slate-500">
+              {examplesLabel}
+            </span>
+            {EXAMPLE_QUESTIONS.map((question) => (
+              <button
+                key={question}
+                type="button"
+                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                onClick={() => setDraft(question)}
+              >
+                {question}
+              </button>
+            ))}
+          </div>
           <div className="grid gap-3 md:grid-cols-[160px_1fr]">
             <div className="space-y-2">
               <label

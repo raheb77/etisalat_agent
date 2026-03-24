@@ -28,7 +28,9 @@ describe("ChatWindow", () => {
       />
     );
 
-    expect(screen.getByText(/يتطلب تحويل للموظف/i)).toBeInTheDocument();
-    expect(screen.getByText(/تصنيف عالي الخطورة/i)).toBeInTheDocument();
+    const handoffBanner = screen.getByTestId("handoff-banner");
+    expect(handoffBanner).toBeInTheDocument();
+    expect(handoffBanner).toHaveTextContent(/يتطلب تحويل للموظف/i);
+    expect(handoffBanner).toHaveTextContent(/تصنيف عالي الخطورة/i);
   });
 });

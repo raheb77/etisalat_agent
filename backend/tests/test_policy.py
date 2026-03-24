@@ -29,3 +29,9 @@ def test_policy_allow_answer():
     decision = policy_decision("billing", "medium", 0.9, True)
     assert decision["allow_answer"] is True
     assert decision["handoff"] is False
+
+
+def test_policy_complaints_always_escalate():
+    decision = policy_decision("complaints", "medium", 0.95, True)
+    assert decision["handoff"] is True
+    assert decision["handoff_reason"] == "Policy restriction"

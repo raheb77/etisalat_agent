@@ -33,6 +33,16 @@ def policy_decision(
             "team": "Compliance/Security",
         }
 
+    # Complaint/escalation requests should consistently go to the escalation path
+    # even when confidence is high, because the user is asking for a formal complaint flow.
+    if category == "complaints":
+        return {
+            "allow_answer": False,
+            "handoff": True,
+            "handoff_reason": "Policy restriction",
+            "team": TEAM_MAP.get(category, "Complaints/CST Desk"),
+        }
+
     if confidence < 0.85:
         return {
             "allow_answer": False,
@@ -67,6 +77,8 @@ def risk_level(category: str) -> str:
 
 def should_escalate(category: str, confidence: float, threshold: float = 0.85) -> tuple[bool, str]:
     if category in AUTO_ESCALATE:
+        return True, "Policy restriction"
+    if category == "complaints":
         return True, "Policy restriction"
     if confidence < threshold:
         return True, "Low confidence"

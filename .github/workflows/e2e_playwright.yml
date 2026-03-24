@@ -1,16 +1,52 @@
-name: frontend-e2e
+name: ci-checks
 
 on:
   pull_request:
     paths:
+      - "backend/**"
       - "frontend/**"
+      - "Makefile"
+      - "backend/pyproject.toml"
       - ".github/workflows/e2e_playwright.yml"
   push:
     paths:
+      - "backend/**"
       - "frontend/**"
+      - "Makefile"
+      - "backend/pyproject.toml"
       - ".github/workflows/e2e_playwright.yml"
 
 jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python3 -m pip install --upgrade pip
+      - run: pip install -e ".[test]"
+      - run: python3 -m compileall app
+      - run: pytest -q
+
+  frontend-unit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run test:unit
+
   e2e:
     runs-on: ubuntu-latest
     defaults:
@@ -23,6 +59,13 @@ jobs:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
+      - name: Guard against tracked artifacts
+        run: |
+          if git ls-files | grep -En "frontend/playwright-report|frontend/test-results|__pycache__/|\.pyc$|\.pytest_cache/|^\.coverage(\.|$)"; then
+            echo "Error: generated artifacts are tracked. Remove and update .gitignore."
+            exit 1
+          fi
+          echo "Tracked-artifact guard passed."
       - run: npm ci
       - run: npx playwright install --with-deps
       - run: npm run test:e2e

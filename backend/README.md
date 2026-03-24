@@ -2,7 +2,8 @@
 
 ## Scope
 - Decision support only.
-- No external retrieval or LLM calls yet.
+- Retrieval remains local/in-memory.
+- Answer generation defaults to a local formatter and can be switched to Moonshot Kimi or Gemini via env.
 - PII is masked before model handling and never logged raw.
 
 ## Production-Inspired Demo Notes
@@ -16,6 +17,11 @@ source .venv/bin/activate
 pip install -e .
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+Optional local env file:
+- The backend automatically loads `backend/.env.local` at startup if it exists.
+- Shell environment variables always override values from `backend/.env.local`.
+- You do not need to run `source .env.local` before starting `uvicorn`.
 
 ## Local Verification
 ```bash
@@ -135,10 +141,54 @@ docker compose up --build
 ```
 
 ## Environment variables
+- `backend/.env.local`
+  - Optional repo-local file loaded automatically at startup.
+  - Shell or system environment variables take precedence over file values.
 - `DISABLE_LLM` (default: false)
   - Conceptual kill-switch for disabling the LLM adapter in later phases.
 - `FACTS_DIR` (optional)
   - Override path to `knowledge/facts`.
+- `LLM_PROVIDER` (default: `local`)
+  - Supported values: `local`, `kimi`, `gemini`.
+- `LLM_MODEL`
+  - Optional override for the chat model name. Provider defaults are used when unset.
+- `LLM_BASE_URL`
+  - Optional override for the OpenAI-compatible API base URL. Provider defaults are used when unset.
+- `KIMI_API_KEY`
+  - Required when `LLM_PROVIDER=kimi`.
+- `GEMINI_API_KEY`
+  - Required when `LLM_PROVIDER=gemini`.
+- `LLM_TIMEOUT_SECONDS` (default: `20`)
+  - Request timeout for the answer-generation API call.
+
+Example local setup for Kimi:
+```bash
+export LLM_PROVIDER=kimi
+export LLM_MODEL=kimi-k2.5
+export LLM_BASE_URL=https://api.moonshot.ai/v1
+export KIMI_API_KEY=your_moonshot_api_key
+```
+
+Example local setup for Gemini:
+```dotenv
+LLM_PROVIDER=gemini
+LLM_MODEL=gemini-3.1-flash-lite-preview
+LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+Equivalent shell setup for Gemini:
+```bash
+export LLM_PROVIDER=gemini
+export LLM_MODEL=gemini-3.1-flash-lite-preview
+export LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+export GEMINI_API_KEY=your_gemini_api_key
+```
+
+Run command after adding `backend/.env.local`:
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+```
 
 ## Endpoints
 - `GET /health`

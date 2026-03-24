@@ -53,3 +53,21 @@ def test_route_auto_escalate_legal():
     category, risk = route("أحتاج استشارة قانونية", None)
     assert category == "legal"
     assert risk == "high"
+
+
+def test_route_legal_factual_lookup_stays_factual():
+    category, risk = route("ما المدة القانونية القصوى لنقل رقم الهاتف المتنقل؟", None)
+    assert category == "porting"
+    assert risk == "low"
+
+
+def test_route_complaint_escalation_phrase():
+    category, risk = route("أبغى أشتكي على الشركة رسميًا", None)
+    assert category == "complaints"
+    assert risk == "medium"
+
+
+def test_route_security_urgent_compromise():
+    category, risk = route("تم اختراق رقمي وأحتاج إجراء عاجل", None)
+    assert category == "security"
+    assert risk == "high"

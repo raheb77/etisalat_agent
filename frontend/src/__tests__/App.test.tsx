@@ -22,8 +22,8 @@ describe("App error handling", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders rate limit error UI when error_code=RATE_LIMIT", () => {
+  it("renders rate limit error UI when error_code=RATE_LIMIT", async () => {
     render(<App />);
-    expect(screen.getByText("RATE_LIMIT")).toBeInTheDocument();
+    expect(await screen.findByText("RATE_LIMIT")).toBeInTheDocument();
   });
 });

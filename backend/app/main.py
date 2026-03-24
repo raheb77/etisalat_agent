@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +14,14 @@ from app.telemetry.metrics import inc_counter
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger("app.exceptions")
 
-app = FastAPI(title=settings.app_name)
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    inc_counter("server_start_total")
+    yield
+
+
+app = FastAPI(title=settings.app_name, lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -32,11 +40,6 @@ app.add_middleware(
 )
 app.add_middleware(RateLimitMiddleware)
 app.include_router(router_api)
-
-
-@app.on_event("startup")
-async def record_startup() -> None:
-    inc_counter("server_start_total")
 
 
 @app.exception_handler(Exception)

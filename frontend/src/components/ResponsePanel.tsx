@@ -5,6 +5,10 @@ import { getCategoryAccent } from "../utils/categoryStyle";
 
 const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
+function normalizeUiText(value: string | undefined): string {
+  return value?.trim().toLowerCase() ?? "";
+}
+
 type ResponsePanelProps = {
   data: QueryResponse | null;
   uiLocale?: "ar-SA" | "en-US";
@@ -51,6 +55,11 @@ export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
     handoff: data.handoff,
     citationsCount: citations.length,
   });
+  const reasonText = uiState.reasonText?.trim();
+  const hasMeaningfulReason =
+    uiState.reasonVisibility === "shown" &&
+    Boolean(reasonText) &&
+    normalizeUiText(reasonText) !== normalizeUiText(uiState.confidenceLabel);
 
   return (
     <div
@@ -95,24 +104,51 @@ export function ResponsePanel({ data, uiLocale }: ResponsePanelProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+        <div
+          className={`rounded-2xl border px-4 py-3 ${
+            uiState.shouldHandoff
+              ? "border-amber-300 bg-amber-50/80"
+              : "border-slate-200 bg-white"
+          }`}
+        >
           <div className="text-xs uppercase tracking-wide text-slate-400">
             Handoff
           </div>
-          <div className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+          <div
+            className={`mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
+              uiState.shouldHandoff
+                ? "bg-amber-100 text-amber-900"
+                : "bg-slate-100 text-slate-700"
+            }`}
+          >
+            {uiState.shouldHandoff && (
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[11px] font-bold text-amber-800">
+                !
+              </span>
+            )}
             {uiState.shouldHandoff ? "Yes" : "No"}
           </div>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-          <div className="text-xs uppercase tracking-wide text-slate-400">
-            Reason
+        {hasMeaningfulReason && (
+          <div
+            className={`rounded-2xl border px-4 py-3 ${
+              uiState.shouldHandoff
+                ? "border-amber-300 bg-amber-50/50"
+                : "border-slate-200 bg-white"
+            }`}
+          >
+            <div className="text-xs uppercase tracking-wide text-slate-400">
+              Reason
+            </div>
+            <div
+              className={`mt-2 text-sm font-medium ${
+                uiState.shouldHandoff ? "text-amber-900" : "text-slate-700"
+              }`}
+            >
+              {reasonText}
+            </div>
           </div>
-          <div className="mt-2 text-sm font-medium text-slate-700">
-            {uiState.reasonVisibility === "shown"
-              ? uiState.reasonText ?? uiState.confidenceLabel
-              : ""}
-          </div>
-        </div>
+        )}
       </div>
 
       {steps.length > 0 && (
