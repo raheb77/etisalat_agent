@@ -33,11 +33,15 @@ app.add_middleware(
         "http://127.0.0.1:5174",
         "http://localhost:8080",
         "http://127.0.0.1:8080",
+        "https://etisalat-agent.vercel.app",
+        "https://etisalat-agent-2y5xznff6-raheb77s-projects.vercel.app",
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 app.add_middleware(RateLimitMiddleware)
 app.include_router(router_api)
 

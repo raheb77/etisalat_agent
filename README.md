@@ -1,21 +1,75 @@
 # CSR Decision Support Agent
 
+A portfolio-ready decision-support system built for telecom CSR workflows,
+combining grounded answers, confidence scoring, handoff logic, and traceable citations.
+
 ## What This Project Does
 
-- Provides a FastAPI backend with `GET /health`, `POST /query`, and `GET /metrics`.
-- Provides a React + Vite CSR UI that queries backend `/query` and renders answer details.
-- Includes Playwright E2E tests with route interception and CI workflow execution.
+- Exposes a FastAPI backend with `GET /health`, `POST /query`, and `GET /metrics`.
+- Provides a React + Vite CSR console that submits telecom support queries and renders:
+  - Grounded answers
+  - Confidence scores
+  - Handoff status
+  - Action steps
+  - Supporting citations
+
+## UI Overview
+
+![Empty state](./docs/images/csr-empty-state.png)
+**Empty state:** A clean CSR console with example prompts for grounded telecom queries.
+
+![Grounded response](./docs/images/csr-grounded-response.png)
+**Grounded response:** Answer, confidence, handoff status, steps, and traceable citations in one view.
+
+## Example
+
+A real telecom CSR query processed through the system:
+
+**Question**
+```text
+ما مدة نقل الرقم؟
+```
+
+**Response**
+```json
+{
+  "answer": "المدة القانونية القصوى لنقل رقم الهاتف المتنقل لا تتجاوز 3 ساعات عمل.",
+  "citations": [
+    {
+      "source": "raw/data/compass_artifact_...markdown.md",
+      "chunk_id": "fact",
+      "score": 1.0,
+      "snippet": "المدة القانونية القصوى لنقل رقم الهاتف المتنقل لا تتجاوز 3 ساعات عمل."
+    }
+  ],
+  "confidence": 0.85,
+  "category": "porting",
+  "handoff": false
+}
+```
+
+This demonstrates: retrieval-grounded answers, explicit confidence scoring,
+and traceable citations surfaced directly in the CSR UI.
 
 ## Quickstart
 
-Run full stack with one command (defined in `Makefile` and `scripts/dev.sh`):
-
+Run the full stack with one command:
 ```bash
 make dev
 ```
 
-Manual backend setup/run (from `backend/README.md`):
+<details>
+<summary>Manual setup</summary>
 
+## Evaluation
+
+Initial evaluation results on a 20-question telecom CSR test set are available in [`backend/eval/results.md`](./backend/eval/results.md).
+
+## Design Decision
+
+The problem was how to expose confidence in a way that stays useful for CSR decision support without sounding falsely certain. I considered two extremes: tying confidence almost entirely to retrieval score, or letting the generated answer style heavily influence confidence. I chose a retrieval-first calibrated threshold approach because this system is meant to be grounded and auditable, not merely persuasive. That is why high confidence is reserved for answers backed by direct evidence and citations, while unsupported, procedural, or ambiguous answers are forced down to lower confidence or fallback behavior. This makes the UI less impressive in some cases, but it keeps the system safer and more honest for telecom support workflows.
+
+**Backend**
 ```bash
 cd backend
 python -m venv .venv
@@ -24,44 +78,26 @@ pip install -e .
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Manual frontend setup/run (scripts in `frontend/package.json`):
-
+**Frontend**
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
+</details>
+
 ## Tests
-
-Repo-level and backend commands:
-
 ```bash
-make test
-make phase2-smoke
-make phase2-validate
-make lint-facts
+make test        # backend + smoke
+npm run test:e2e # Playwright E2E
 ```
 
-```bash
-cd backend
-pytest -q tests/test_smoke.py
-python3 -m compileall app
-PYTHONPATH=. python3 scripts/smoke_quality.py
-```
+## Stack
 
-Frontend E2E:
-
-```bash
-cd frontend
-npx playwright install --with-deps
-npm run test:e2e
-```
-
-## Engineering Highlights
-
-- In-memory telemetry and metrics endpoint (`/metrics`) with counters and latency statistics.
-- Deterministic query decision path and safe fallback handling in backend routes.
-- In-memory caching and rate limiting middleware in backend.
-- CI workflows for facts linting and frontend Playwright E2E.
-- Repository guard against committing generated artifacts in E2E workflow.
+| Layer    | Tech                    |
+|----------|-------------------------|
+| Backend  | FastAPI, Python         |
+| Frontend | React, Vite, TypeScript |
+| Testing  | Pytest, Playwright      |
+| CI       | GitHub Actions          |
