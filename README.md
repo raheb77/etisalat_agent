@@ -1,10 +1,9 @@
 # CSR Decision Support Agent
 
-A portfolio-ready decision-support system built for telecom CSR workflows,
-combining grounded answers, confidence scoring, handoff logic, and traceable citations.
-
 **Live demo:** https://etisalat-agent.vercel.app  
 **API:** https://etisalat-agent-backend.onrender.com
+
+A portfolio-ready decision-support system built for telecom CSR workflows, combining grounded answers, confidence scoring, handoff logic, and traceable citations.
 
 ## What This Project Does
 
@@ -51,8 +50,7 @@ A real telecom CSR query processed through the system:
 }
 ```
 
-This demonstrates: retrieval-grounded answers, explicit confidence scoring,
-and traceable citations surfaced directly in the CSR UI.
+This example demonstrates retrieval-grounded answers, explicit confidence scoring, and traceable citations surfaced directly in the CSR UI.
 
 ## Design Decision
 
@@ -60,7 +58,7 @@ The core challenge was calibrating confidence in a way that stays useful for CSR
 
 ## Evaluation
 
-Initial evaluation results on a 20-question telecom CSR test set are available in [`backend/eval/results.md`](./backend/eval/results.md).
+Initial evaluation results on a 20-question telecom CSR test set are available in [`eval/results.md`](./eval/results.md).
 
 ## Quickstart
 
@@ -92,8 +90,8 @@ npm run dev
 
 ## Tests
 ```bash
-make test        # backend + smoke
-npm run test:e2e # Playwright E2E
+make test
+cd frontend && npm run test:e2e
 ```
 
 ## Stack
