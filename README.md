@@ -3,6 +3,9 @@
 A portfolio-ready decision-support system built for telecom CSR workflows,
 combining grounded answers, confidence scoring, handoff logic, and traceable citations.
 
+**Live demo:** https://etisalat-agent.vercel.app  
+**API:** https://etisalat-agent-backend.onrender.com
+
 ## What This Project Does
 
 - Exposes a FastAPI backend with `GET /health`, `POST /query`, and `GET /metrics`.
@@ -15,10 +18,10 @@ combining grounded answers, confidence scoring, handoff logic, and traceable cit
 
 ## UI Overview
 
-![Empty state](./docs/images/csr-empty-state.png)
+![Empty state](./docs/images/csr-empty-state.png)  
 **Empty state:** A clean CSR console with example prompts for grounded telecom queries.
 
-![Grounded response](./docs/images/csr-grounded-response.png)
+![Grounded response](./docs/images/csr-grounded-response.png)  
 **Grounded response:** Answer, confidence, handoff status, steps, and traceable citations in one view.
 
 ## Example
@@ -51,6 +54,14 @@ A real telecom CSR query processed through the system:
 This demonstrates: retrieval-grounded answers, explicit confidence scoring,
 and traceable citations surfaced directly in the CSR UI.
 
+## Design Decision
+
+The core challenge was calibrating confidence in a way that stays useful for CSR decision support without sounding falsely certain. I chose a retrieval-first calibrated threshold approach because this system is meant to be grounded and auditable. High confidence is reserved for answers backed by direct evidence and citations; unsupported or ambiguous answers fall back to lower confidence or handoff. This keeps the system safer and more honest for telecom support workflows.
+
+## Evaluation
+
+Initial evaluation results on a 20-question telecom CSR test set are available in [`backend/eval/results.md`](./backend/eval/results.md).
+
 ## Quickstart
 
 Run the full stack with one command:
@@ -60,14 +71,6 @@ make dev
 
 <details>
 <summary>Manual setup</summary>
-
-## Evaluation
-
-Initial evaluation results on a 20-question telecom CSR test set are available in [`backend/eval/results.md`](./backend/eval/results.md).
-
-## Design Decision
-
-The problem was how to expose confidence in a way that stays useful for CSR decision support without sounding falsely certain. I considered two extremes: tying confidence almost entirely to retrieval score, or letting the generated answer style heavily influence confidence. I chose a retrieval-first calibrated threshold approach because this system is meant to be grounded and auditable, not merely persuasive. That is why high confidence is reserved for answers backed by direct evidence and citations, while unsupported, procedural, or ambiguous answers are forced down to lower confidence or fallback behavior. This makes the UI less impressive in some cases, but it keeps the system safer and more honest for telecom support workflows.
 
 **Backend**
 ```bash
