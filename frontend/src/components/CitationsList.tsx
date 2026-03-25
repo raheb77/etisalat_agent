@@ -72,15 +72,15 @@ function formatCitationSourceLabel(source: string): string {
   if (!trimmed) return "Unknown source";
 
   const parts = trimmed.split("/").filter(Boolean);
-  const filename = parts.at(-1) ?? trimmed;
+const filename = parts[parts.length - 1] ?? trimmed;
 
-  if (/^compass_artifact_/i.test(filename)) {
-    return "Compass artifact";
-  }
+if (/^compass_artifact_/i.test(filename)) {
+  return "Compass artifact";
+}
 
-  const readableFile = toReadableSegment(filename);
-  const parent = parts.at(-2);
-  if (!parent) return readableFile;
+const readableFile = toReadableSegment(filename);
+const parent = parts.length > 1 ? parts[parts.length - 2] : undefined;
+if (!parent) return readableFile;
 
   const readableParent = toReadableSegment(parent);
   if (!readableParent || readableParent === readableFile) {

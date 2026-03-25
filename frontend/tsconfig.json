@@ -15,5 +15,6 @@
     "resolveJsonModule": true
   },
   "include": ["src"],
+  "exclude": ["src/__tests__", "tests", "**/*.test.ts", "**/*.test.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
